@@ -10,31 +10,51 @@ type User = {
 };
 
 export default function Home() {
-  const [users, setUsers] = useState<User[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
 
   async function loadUsers() {
-    const response = await fetch("http://localhost:4000/api/users");
-    const data = await response.json();
-    setUsers(data);
+    try {
+      const response = await fetch("/api/users");
+
+      if (!response.ok) {
+        throw new Error("Failed to load users");
+      }
+
+      const data = await response.json();
+      setUsers(data);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await fetch("http://localhost:4000/api/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name, email }),
-    });
+    try {
+      const response = await fetch("/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          email,
+        }),
+      });
 
-    setName("");
-    setEmail("");
+      if (!response.ok) {
+        throw new Error("Failed to create user");
+      }
 
-    await loadUsers();
+      setName("");
+      setEmail("");
+
+      await loadUsers();
+    } catch (error) {
+      console.error("Error creating user:", error);
+    }
   }
 
   useEffect(() => {
@@ -65,13 +85,13 @@ export default function Home() {
 
       <h2>Users</h2>
 
-      {users.map((user) => (
-        <div key={user.id}>
-          <p>
-            {user.id} — {user.name} — {user.email}
-          </p>
-        </div>
-      ))}
+      <ul>
+        {users.map((user) => (
+          <li key={user.id}>
+            {user.name} - {user.email}
+          </li>
+        ))}
+      </ul>
     </main>
   );
 }
